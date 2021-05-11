@@ -1,6 +1,6 @@
 import os
 
-ignore_dirs = ['.git', '.idea']
+ignore_dirs = ['.git', '.idea', '.imgs']
 index = 'README.MD'
 
 if os.path.exists(index):
@@ -18,4 +18,5 @@ with open(index, 'w+', encoding='utf-8') as f:
     for d in dirs:
         f.write(f'# {d}\r\n')
         for item in os.listdir(d):
-            f.write(f'- [{item}]({d}/{item})\r\n')
+            if item.endswith('.md'):
+                f.write(f'- [{item}]({d}/{item})\r\n')
