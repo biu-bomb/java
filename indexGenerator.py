@@ -13,7 +13,7 @@ for d in os.listdir('.'):
     if os.path.isfile(d):
         continue
     dirs.append(d)
-
+dirs.sort(reverse = True)
 with open(index, 'w+', encoding='utf-8') as f:
     for d in dirs:
         f.write(f'# {d}\r\n')
