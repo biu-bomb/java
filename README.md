@@ -1,6 +1,14 @@
 # AQS
 - [AQS.md](AQS/AQS.md)
 - [Node.md](AQS/Node.md)
+# 2020-05-19
+- [CLOST_WAIT.md](2020-05-19/CLOST_WAIT.md)
+- [DNS.md](2020-05-19/DNS.md)
+- [Netty.md](2020-05-19/Netty.md)
+- [OSI.md](2020-05-19/OSI.md)
+- [RPC.md](2020-05-19/RPC.md)
+- [线程池任务策略.md](2020-05-19/线程池任务策略.md)
+- [跨域.md](2020-05-19/跨域.md)
 # 2020-05-18
 - [HTTP和HTTPS.md](2020-05-18/HTTP和HTTPS.md)
 - [RestFul.md](2020-05-18/RestFul.md)
