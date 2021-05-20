@@ -57,7 +57,7 @@
 
 ## 文件格式
 
-![img](/Users/godme/project/lean/java/.imgs/format.png)
+![img](../.imgs/format.png)
 
 具体数据记录还是在于磁盘落库，``redo log``是为了防止服务器宕机而先行的日志记录，因此采用的是循环写入。
 
