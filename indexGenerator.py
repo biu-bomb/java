@@ -20,4 +20,4 @@ with open(index, 'w+', encoding='utf-8') as f:
         f.write(f'# {d}\r\n')
         for item in os.listdir(d):
             if item.split(".")[-1] in allow_suffix:
-                f.write(f'- [{item}]({d}/{item})\r\n')
+                f.write(f'- [{item}]({d}\\/{item})\r\n')
