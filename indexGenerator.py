@@ -1,7 +1,7 @@
 import os
 
 ignore_dirs = ['.git', '.idea', '.imgs']
-allow_suffix = ['md', 'MD', 'png', 'gif']
+allow_suffix = ['md', 'MD', 'png', 'gif', 'pdf']
 index = 'README.MD'
 
 if os.path.exists(index):
