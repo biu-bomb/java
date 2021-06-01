@@ -495,6 +495,8 @@ class Solution {
 ![image-20210602005821387](../.imgs/sort3.png)
 
 ```java
+// time : O(n)
+// space: O(1)
 class Solution {
     public ListNode oddEvenList(ListNode head) {
       if(head == null) return null;
@@ -563,7 +565,8 @@ class Node {
         this.random = null;
     }
 }
-
+// time: O(n)
+// space: O(n)
 class Solution {
     Map<Node, Node> cache = new HashMap<>();
     public Node copyRandomList(Node head) {
