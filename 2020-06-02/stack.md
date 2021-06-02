@@ -278,6 +278,7 @@ class Solution {
 ![image-20210602234523137](../.imgs/image-20210602234523137.png)
 
 ```java
+// 特殊的可能是压栈的方式，也可能是其他维护的方式特殊·
 // time: O(n)
 // space: O(1) 26字符
 class Solution {
