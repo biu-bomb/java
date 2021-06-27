@@ -1,6 +1,8 @@
 # AQS
 - [Node.md](AQS\/Node.md)
 - [AQS.md](AQS\/AQS.md)
+# 2020-06-27
+- [STAR.md](2020-06-27\/STAR.md)
 # 2020-06-26
 - [MYSQL-RR.md](2020-06-26\/MYSQL-RR.md)
 # 2020-06-06
