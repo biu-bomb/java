@@ -20,6 +20,7 @@
             // 1. 初始化头结点
             if (t == null) { 
                 if (compareAndSetHead(new Node()))
+                    // 此时 head.next = null
                     tail = head;
             // 直接尾节点    
             } else {
@@ -353,7 +354,13 @@
     }
 ```
 
-
+> - ``true``：需要入队
+>   - `` h != t``：队列非空
+>     - ``(s = h.next) == null``：``head``正在初始化，有节点正在入队，存在并发竞争，需入队
+>     - ``s.thred != Thread.currentThread()``：不是老二，没有争抢资格
+> - ``false``：无需入队
+>   - ``h == t``：空队列，无阻塞
+>   - ``(s = h.next) != null && s.thread = Thread.currentThread()``：老二，具有直接争抢资格
 
 ## 释放
 
@@ -401,5 +408,106 @@
         }
 ```
 
+# Condition
 
+## 获取
+
+```java
+        final ConditionObject newCondition() {
+            return new ConditionObject();
+        }
+```
+
+## 等待
+
+```java
+        public final void await() throws InterruptedException {
+            if (Thread.interrupted())  throw new InterruptedException();
+            // 1. 加入条件队列
+            Node node = addConditionWaiter();
+            // 2. 释放当前持有锁
+            int savedState = fullyRelease(node);
+            int interruptMode = 0;
+            // 3. 挂起，等待进入阻塞队列
+            while (!isOnSyncQueue(node)) {
+                LockSupport.park(this);
+                if ((interruptMode = checkInterruptWhileWaiting(node)) != 0)
+                    break;
+            }
+            // 3. 进入阻塞队列，自旋抢锁
+            if (acquireQueued(node, savedState) && interruptMode != THROW_IE)
+                interruptMode = REINTERRUPT;
+            if (node.nextWaiter != null) // clean up if cancelled
+                unlinkCancelledWaiters();
+            if (interruptMode != 0)
+                reportInterruptAfterWait(interruptMode);
+        }
+```
+
+- ``addConditionWaiter``
+
+```java
+        private Node addConditionWaiter() {
+            Node t = lastWaiter;
+            // 1. 溢出非法状态节点
+            if (t != null && t.waitStatus != Node.CONDITION) {
+                unlinkCancelledWaiters();
+                t = lastWaiter;
+            }
+            // 2. 当前线程添加Condition节点
+            Node node = new Node(Thread.currentThread(), Node.CONDITION);
+            if (t == null)
+                firstWaiter = node;
+            else
+                t.nextWaiter = node;
+            lastWaiter = node;
+            return node;
+        }
+```
+
+## 唤醒
+
+```java
+        public final void signal() {
+            if (!isHeldExclusively())
+                throw new IllegalMonitorStateException();
+            Node first = firstWaiter;
+            if (first != null)
+                doSignal(first);
+        }
+```
+
+- ``doSignal``
+
+```java
+        private void doSignal(Node first) {
+            do {
+                // 1. 获取头结点，如果没有等待的节点了，lastWaiter = null
+                if ( (firstWaiter = first.nextWaiter) == null)
+                    lastWaiter = null;
+                // 2. 直接切断后续引用
+                first.nextWaiter = null;
+                // 3. 转移节点到阻塞队列
+            } while (!transferForSignal(first) && (first = firstWaiter) != null);
+        }
+```
+
+- ``transferForSignal``
+
+```java
+    final boolean transferForSignal(Node node) {
+		// 1. CAS修改，如果修改失败，说明其他线程已经修改，返回继续探测
+        if (!compareAndSetWaitStatus(node, Node.CONDITION, 0))
+            return false;
+        // 2. 修改成功，放入阻塞队列
+        Node p = enq(node);
+        int ws = p.waitStatus;
+        // 3. SIGNAL 等待前驱节点唤醒
+        if (ws > 0 || !compareAndSetWaitStatus(p, ws, Node.SIGNAL))
+            LockSupport.unpark(node.thread);
+        return true;
+    }
+```
+
+![](../.imgs/condition.png)
 
