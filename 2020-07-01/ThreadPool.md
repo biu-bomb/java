@@ -269,3 +269,272 @@
     }
 ```
 
+# 终止检测
+
+```java
+    final void tryTerminate() {
+      	// 线程终止检测
+        for (;;) {
+            int c = ctl.get();
+          	// 1. 非终止判断
+          	// 1.1 还在运行
+          	// 1.2 还有任务执行
+          	// 1.3 虽然shutdown，但是任务队列费控
+            if (isRunning(c) ||
+                runStateAtLeast(c, TIDYING) ||
+                (runStateOf(c) == SHUTDOWN && ! workQueue.isEmpty()))
+                return;
+          	// 2. 中断一个线程(利用processWorkerExit传递关闭)
+            if (workerCountOf(c) != 0) { // Eligible to terminate
+                interruptIdleWorkers(ONLY_ONE);
+                return;
+            }
+						// 3. 终止状态
+            final ReentrantLock mainLock = this.mainLock;
+            mainLock.lock();
+            try {
+              	// 3.1 状态切换到TIDYING
+                if (ctl.compareAndSet(c, ctlOf(TIDYING, 0))) {
+                    try {
+                        terminated();
+                    } finally {
+                      	// 3.2 设置TERMINATED状态
+                        ctl.set(ctlOf(TERMINATED, 0));
+                      	// 3.3 唤醒等待终止条件的线程
+                        termination.signalAll();
+                    }
+                    return;
+                }
+            } finally {
+                mainLock.unlock();
+            }
+        }
+    }
+```
+
+# 终止运行
+
+- ``shutdown``
+
+```java
+    public void shutdown() {
+        final ReentrantLock mainLock = this.mainLock;
+        mainLock.lock();
+        try {
+          	// 1. 固定线程参数
+            checkShutdownAccess();
+          	// 2. 修改线程池状态
+          	// 2.1 shutdown 不允许提交任务
+          	// 2.2 shutdown getTask不阻塞，任务队列执行完毕销毁线程
+            advanceRunState(SHUTDOWN);
+          	// 3. 中断空闲、阻塞线程
+            interruptIdleWorkers();
+          	// 4. 回调
+            onShutdown(); 
+        } finally {
+            mainLock.unlock();
+        }
+      	// 尝试终止
+        tryTerminate();
+    }
+```
+
+- ``shutdownNow``
+
+```java
+    public List<Runnable> shutdownNow() {
+        List<Runnable> tasks;
+        final ReentrantLock mainLock = this.mainLock;
+        mainLock.lock();
+        try {
+            checkShutdownAccess();
+          	// 状态直接修改为STOP，尝试直接中断
+            advanceRunState(STOP);
+            interruptWorkers();
+            tasks = drainQueue();
+        } finally {
+            mainLock.unlock();
+        }
+        tryTerminate();
+        return tasks;
+    }
+```
+
+# 拒绝策略
+
+```java
+    final void reject(Runnable command) {
+        handler.rejectedExecution(command, this);
+    }
+```
+
+| ``RejectedExecutionHandler`` | ``description`` |
+| ---------------------------- | --------------- |
+| ``AbortPolicy``              | 抛出异常        |
+| ``DiscardPolicy``            | 啥也不做        |
+| ``DiscardOldestPolicy``      | 丢弃最早        |
+| ``CallerRunsPolicy``         | 再来一次        |
+
+- ``AbortPolicy``
+
+```java
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+            throw new RejectedExecutionException("Task " + r.toString() +
+                                                 " rejected from " +
+                                                 e.toString());
+        }
+```
+
+- ``DiscardPolicy``
+
+```java
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        }
+```
+
+- ``DiscardOldestPolicy``
+
+```java
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+            if (!e.isShutdown()) {
+                e.getQueue().poll();
+                e.execute(r);
+            }
+        }
+```
+
+- ``CallerRunsPolicy``
+
+```java
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+            if (!e.isShutdown()) {
+              	// 当前线程执行
+                r.run();
+            }
+        }
+```
+
+# 常用线程
+
+## 六大参数
+
+```java
+    public ThreadPoolExecutor(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit,
+                              BlockingQueue<Runnable> workQueue,
+                              ThreadFactory threadFactory,
+                              RejectedExecutionHandler handler) ;
+```
+
+| 参数                | 作用         |
+| ------------------- | ------------ |
+| ``corePoolSize``    | 核心线程数   |
+| ``maximumPoolSize`` | 最大线程数   |
+| ``keepAliveTime``   | 空闲活跃时长 |
+| ``unit``            | 时长单位     |
+| ``workQueue``       | 任务队列     |
+| ``threadFactory``   | 线程工厂     |
+| ``handler``         | 拒绝策略     |
+
+## 常用线程池
+
+| 线程池                      | 效果                                   |
+| --------------------------- | -------------------------------------- |
+| ``newCachedThreadPool``     | 线程数量可伸缩，任务多创建，任务少回收 |
+| ``newFixedThreadPool``      | 固定线程数量线程池                     |
+| ``newSingleThreadExecutor`` | 单线程池                               |
+| ``newScheduleThreadPool``   | 调度线程池，定时执行                   |
+
+- ``newCacheThreadPool``
+
+```java
+    public static ExecutorService newCachedThreadPool() {
+      	// 最小线程为0， 最大线程为Integer.MAX_VALUE
+        return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                      60L, TimeUnit.SECONDS,
+                                      new SynchronousQueue<Runnable>());
+    }
+```
+
+```java
+    // SynchronousQueue：干完就销毁线程
+		public boolean isEmpty() {
+        return true;
+    }
+
+    public int size() {
+        return 0;
+    }
+```
+
+- ``newFixedThreadPool``
+
+```java
+    public static ExecutorService newFixedThreadPool(int nThreads, ThreadFactory threadFactory) {
+      // 活跃等于最大，固定线程数  
+      return new ThreadPoolExecutor(nThreads, nThreads,
+                                      0L, TimeUnit.MILLISECONDS,
+                                      new LinkedBlockingQueue<Runnable>(),
+                                      threadFactory);
+    }
+```
+
+- ``newSingleThreadExecutor``
+
+```java
+    public static ExecutorService newSingleThreadExecutor() {
+      	// 稳稳一条线程
+        return new FinalizableDelegatedExecutorService
+            (new ThreadPoolExecutor(1, 1,
+                                    0L, TimeUnit.MILLISECONDS,
+                                    new LinkedBlockingQueue<Runnable>()));
+    }
+```
+
+- ``ScheduledExecutorService``
+
+```java
+    public static ScheduledExecutorService newSingleThreadScheduledExecutor() {
+        return new DelegatedScheduledExecutorService
+            (new ScheduledThreadPoolExecutor(1));
+    }
+```
+
+```java
+    public ScheduledThreadPoolExecutor(int corePoolSize) {
+      	// 最低一条线程
+        super(corePoolSize, Integer.MAX_VALUE, 0, NANOSECONDS,
+              new DelayedWorkQueue());
+    }
+```
+
+# 线程过期
+
+```java
+    public void allowCoreThreadTimeOut(boolean value) {
+        if (value && keepAliveTime <= 0)
+            throw new IllegalArgumentException("Core threads must have nonzero keep alive times");
+        if (value != allowCoreThreadTimeOut) {
+            allowCoreThreadTimeOut = value;
+            if (value)
+                interruptIdleWorkers();
+        }
+    }
+```
+
+```java
+          // getTask  
+					boolean timed = allowCoreThreadTimeOut || wc > corePoolSize;
+					if ((wc > maximumPoolSize || (timed && timedOut))
+                && (wc > 1 || workQueue.isEmpty())) {
+                if (compareAndDecrementWorkerCount(c))
+                    return null;
+                continue;
+            }
+```
+
+不允许线程过期的时候，能够回收的都是超过``corePoolSize``的线程。
+
+如果允许线程过期，``corePoolSize``内的空闲线程也能够回收。
