@@ -43,7 +43,7 @@
 
 # 轻量级锁
 
-![SCAS (1)](../.imgs/SCAS (1).png)
+![SCAS (1)](../.imgs/SCAS.png)
 
 ---
 
