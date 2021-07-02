@@ -1,19 +1,19 @@
-- [ ] ``JAVA``
+- [x] ``JAVA``
   - [x] ``HashMap``、``ConcurrentHashMap``
     - [HashMap](2020-06-28/HashMap.md)
     - [ConcurrentHashMap](2020-06-28/ConcurrentHashMap.md)
-  - [ ] 锁
-    - [ ] ``Synchronized``
+  - [x] 锁
+    - [x] ``Synchronized``
     - [x] [``RetreenLock``](2020-06-29/AQS.md)
-      - [ ] ``CAS``
-      - [ ] ``volatile``
-      - [ ] ``AQS``
-      - [ ] ``CountDownLatch``
-  - [ ] 线程池
-    - [ ] ``Thread``
-    - [ ] ``ThreadPool``
-- [ ] ``OS``
-  - [ ] 内存管理
+      - [x] ``CAS``
+      - [x] ``volatile``
+      - [x] ``AQS``
+      - [x] ``CountDownLatch``
+  - [x] 线程池
+    - [x] ``Thread``
+    - [x] ``ThreadPool``
+- [x] ``OS``
+  - [x] 内存管理
 - [ ] ``Network``
   - [ ] ``TCP``
   - [ ] ``HTTPS``
