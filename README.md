@@ -2,9 +2,8 @@
 - [AQS.md](AQS\/AQS.md)
 - [Node.md](AQS\/Node.md)
 # 2020-07-05
-- [Redis 主从复制.pdf](2020-07-05\/Redis 主从复制.pdf)
 - [redis-serialize.md](2020-07-05\/redis-serialize.md)
-- [redis-sync.md](2020-07-05\/redis-sync.md)
+- [Redis主从复制.pdf](2020-07-05\/Redis主从复制.pdf)
 - [Redis数据结构.pdf](2020-07-05\/Redis数据结构.pdf)
 # 2020-07-04
 - [HTTP.md](2020-07-04\/HTTP.md)
