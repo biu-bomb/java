@@ -1,6 +1,8 @@
 # AQS
 - [Node.md](AQS\/Node.md)
 - [AQS.md](AQS\/AQS.md)
+# 2020-07-24
+- [springBean.md](2020-07-24\/springBean.md)
 # 2020-07-20
 - [redis-evicate.md](2020-07-20\/redis-evicate.md)
 # 2020-07-16
